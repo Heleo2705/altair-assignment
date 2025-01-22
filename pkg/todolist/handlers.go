@@ -26,6 +26,8 @@ func (h *ItemsHandlers) ConfigureRoutes(r chi.Router) {
 			r.Put("/", h.updateItem)
 			r.Delete("/", h.deleteItem)
 		})
+
+		r.Put("/order", h.updateOrder) // New route for updating order
 	})
 }
 
