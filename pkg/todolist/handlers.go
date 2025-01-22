@@ -118,3 +118,28 @@ func (h *ItemsHandlers) getItem(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(deployment)
 }
+
+type UpdateOrderRequest struct {
+	IdOfItem        string `json:"idOfItem"`
+	StartingPosition int    `json:"startingPosition"`
+	EndingPosition   int    `json:"endingPosition"`
+}
+
+func (h *ItemsHandlers) updateOrder(w http.ResponseWriter, r *http.Request) {
+	var req UpdateOrderRequest
+	err := requestAs(r, &req)
+	if err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	updatedItem, err := h.ItemsService.UpdateItemOrder(r.Context(), req.IdOfItem, req.StartingPosition, req.EndingPosition)
+	if err != nil {
+		http.Error(w, "Failed to update item order", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(updatedItem)
+}
