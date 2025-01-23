@@ -202,6 +202,29 @@ var _ = Describe("Todo Serve tests", func() {
 					Expect(items.Count).To(Equal(2))
 					Expect(items.Items).To(ContainElements(item, secondItem))
 				})
+
+				Specify("Item order is updated", func() {
+					orderRequest := UpdateOrderRequest{
+						Start: 1,
+						End:   0,
+					}
+					resp := testRequest(
+						ts,
+						"PUT",
+						"/todolist/dac2581f-9c76-47aa-877e-6c15ddcfb064/order",
+						&orderRequest,
+						nil,
+					)
+					Expect(resp.StatusCode).To(Equal(202))
+
+					var items structs.TodoItemList
+					resp = testRequest(ts, "GET", "/todolist", nil, &items)
+					Expect(resp.StatusCode).To(Equal(200))
+					Expect(items.Count).To(Equal(2))
+					Expect(items.Items[0]).To(Equal(secondItem))
+					Expect(items.Items[1]).To(Equal(item))
+
+				})
 			})
 		})
 	})
