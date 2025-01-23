@@ -24,10 +24,9 @@ func (h *ItemsHandlers) ConfigureRoutes(r chi.Router) {
 		r.Route("/{id}", func(r chi.Router) {
 			r.Get("/", h.getItem)
 			r.Put("/", h.updateItem)
+			r.Put("/order", h.updateOrder)
 			r.Delete("/", h.deleteItem)
 		})
-
-		r.Put("/order", h.updateOrder) // New route for updating order
 	})
 }
 
@@ -43,10 +42,11 @@ func requestAs(r *http.Request, v interface{}) error {
 	return nil
 }
 
-type CreateItemRequest struct{
-	Item structs.TodoItem
+type CreateItemRequest struct {
+	Item     structs.TodoItem
 	ListSize int
 }
+
 func (h *ItemsHandlers) createItem(w http.ResponseWriter, r *http.Request) {
 	var Request CreateItemRequest
 	err := requestAs(r, &Request)
@@ -54,7 +54,7 @@ func (h *ItemsHandlers) createItem(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed", http.StatusBadRequest)
 		return
 	}
-	Request.Item.Order=Request.ListSize+1;
+	Request.Item.ItemOrder = Request.ListSize + 1
 	err = h.ItemsService.AddItem(r.Context(), &Request.Item)
 	if err != nil {
 		http.Error(w, "Failed", http.StatusBadRequest)
@@ -122,26 +122,64 @@ func (h *ItemsHandlers) getItem(w http.ResponseWriter, r *http.Request) {
 }
 
 type UpdateOrderRequest struct {
-	IdOfItem        string `json:"idOfItem"`
-	StartingPosition int    `json:"startingPosition"`
-	EndingPosition   int    `json:"endingPosition"`
+	Start int
+	End   int
 }
 
 func (h *ItemsHandlers) updateOrder(w http.ResponseWriter, r *http.Request) {
-	var req UpdateOrderRequest
-	err := requestAs(r, &req)
+	itemId := chi.URLParam(r, "id")
+
+	item, err := h.ItemsService.GetItem(r.Context(), itemId)
 	if err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		http.Error(w, "Failed", 401)
 		return
 	}
-
-	updatedItem, err := h.ItemsService.UpdateItemOrder(r.Context(), req.IdOfItem, req.StartingPosition, req.EndingPosition)
+	var request UpdateOrderRequest
+	err = requestAs(r, &request)
 	if err != nil {
-		http.Error(w, "Failed to update item order", http.StatusInternalServerError)
+		http.Error(w, "Failed", 402)
 		return
 	}
-
+	listItems, err := h.ItemsService.ListItems(r.Context())
+	if err != nil {
+		http.Error(w, "Failed", 403)
+		return
+	}
+	if request.Start < request.End {
+		
+		for i := request.Start ; i < request.End; i++ {
+			curr := listItems.Items[i]
+			curr.ItemOrder = curr.ItemOrder - 1
+			err = h.ItemsService.UpdateItem(r.Context(), &curr)
+			if err != nil {
+				http.Error(w, "Failed", 404)
+				return
+			}
+		}
+		item.ItemOrder = request.End+1
+		err = h.ItemsService.UpdateItem(r.Context(), item)
+		if err != nil {
+			http.Error(w, "Failed", 405)
+			return
+		}
+	} else if request.Start > request.End {
+		for i := request.End; i < request.Start; i++ {
+			curr := listItems.Items[i]
+			curr.ItemOrder = curr.ItemOrder + 1
+			err = h.ItemsService.UpdateItem(r.Context(), &curr)
+			if err != nil {
+				http.Error(w, "Failed", 406)
+				return
+			}
+		}
+		item.ItemOrder = request.End+1
+		err = h.ItemsService.UpdateItem(r.Context(), item)
+		if err != nil {
+			http.Error(w, "Failed", 407)
+			return
+		}
+	}
 	w.Header().Add("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(updatedItem)
+	_ = json.NewEncoder(w).Encode(item)
 }

@@ -1,9 +1,9 @@
 package structs
 
 type TodoItem struct {
-	Id    string
-	Item  string
-	Order int
+	Id        string
+	Item      string
+	ItemOrder int
 }
 
 type TodoItemList struct {

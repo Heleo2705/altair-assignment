@@ -28,7 +28,7 @@ DROP TABLE IF EXISTS todolist;
 CREATE TABLE todolist (
 	id    CHAR(40) NOT NULL,
 	item   VARCHAR(250) NOT NULL,
-	"order" INT UNIQUE NOT NULL,
+	item_order INT  NOT NULL,
     CONSTRAINT rid_pkey PRIMARY KEY (id)
 );
 `
