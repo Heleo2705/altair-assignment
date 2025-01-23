@@ -146,33 +146,38 @@ func (h *ItemsHandlers) updateOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if request.Start < request.End {
-		
-		for i := request.Start+1 ; i < request.End; i++ {
+
+		for i := range listItems.Items {
 			curr := listItems.Items[i]
-			curr.ItemOrder = curr.ItemOrder - 1
-			err = h.ItemsService.UpdateItem(r.Context(), &curr)
-			if err != nil {
-				http.Error(w, "Failed", 404)
-				return
+			if curr.ItemOrder < request.End && curr.ItemOrder > request.Start {
+
+				curr.ItemOrder = curr.ItemOrder - 1
+				err = h.ItemsService.UpdateItem(r.Context(), &curr)
+				if err != nil {
+					http.Error(w, "Failed", 404)
+					return
+				}
 			}
 		}
-		item.ItemOrder = request.End+1
+		item.ItemOrder = request.End + 1
 		err = h.ItemsService.UpdateItem(r.Context(), item)
 		if err != nil {
 			http.Error(w, "Failed", 405)
 			return
 		}
 	} else if request.Start > request.End {
-		for i := request.End+1; i < request.Start; i++ {
+		for i := range listItems.Items {
 			curr := listItems.Items[i]
-			curr.ItemOrder = curr.ItemOrder + 1
-			err = h.ItemsService.UpdateItem(r.Context(), &curr)
-			if err != nil {
-				http.Error(w, "Failed", 406)
-				return
+			if curr.ItemOrder > request.End && curr.ItemOrder < request.Start {
+				curr.ItemOrder = curr.ItemOrder + 1
+				err = h.ItemsService.UpdateItem(r.Context(), &curr)
+				if err != nil {
+					http.Error(w, "Failed", 406)
+					return
+				}
 			}
 		}
-		item.ItemOrder = request.End+1
+		item.ItemOrder = request.End + 1
 		err = h.ItemsService.UpdateItem(r.Context(), item)
 		if err != nil {
 			http.Error(w, "Failed", 407)
