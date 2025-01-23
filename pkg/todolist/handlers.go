@@ -147,7 +147,7 @@ func (h *ItemsHandlers) updateOrder(w http.ResponseWriter, r *http.Request) {
 	}
 	if request.Start < request.End {
 		
-		for i := request.Start ; i < request.End; i++ {
+		for i := request.Start+1 ; i < request.End; i++ {
 			curr := listItems.Items[i]
 			curr.ItemOrder = curr.ItemOrder - 1
 			err = h.ItemsService.UpdateItem(r.Context(), &curr)
@@ -163,7 +163,7 @@ func (h *ItemsHandlers) updateOrder(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else if request.Start > request.End {
-		for i := request.End; i < request.Start; i++ {
+		for i := request.End+1; i < request.Start; i++ {
 			curr := listItems.Items[i]
 			curr.ItemOrder = curr.ItemOrder + 1
 			err = h.ItemsService.UpdateItem(r.Context(), &curr)
